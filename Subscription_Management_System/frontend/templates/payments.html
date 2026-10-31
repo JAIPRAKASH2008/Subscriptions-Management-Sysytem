@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Transactions{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Payment Transactions</h1>
+      <p>Audit trail of all settled card, bank transfer, and gateway transactions.</p>
+    </div>
+  </div>
+
+  <div class="card-table-wrapper">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Reference ID</th>
+            <th>Customer</th>
+            <th>Invoice</th>
+            <th>Payment Method</th>
+            <th>Settled Amount</th>
+            <th>Date & Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pay in payments %}
+          <tr>
+            <td><span class="cell-code">{{ pay.payment_reference }}</span></td>
+            <td>
+              <strong>{{ pay.customer_name }}</strong>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">{{ pay.company_name }}</div>
+            </td>
+            <td><span class="cell-code" style="font-size: 0.75rem;">{{ pay.invoice_number }}</span></td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                {{ pay.payment_method }}
+              </span>
+            </td>
+            <td>
+              <strong style="color: var(--status-active-text); font-size: 0.95rem;">
+                {{ pay.amount | currency(pay.currency) }}
+              </strong>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ pay.payment_date }}</span>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ pay.transaction_status | lower }}">
+                <span class="status-dot"></span>
+                {{ pay.transaction_status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">
+              No payment transactions recorded.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

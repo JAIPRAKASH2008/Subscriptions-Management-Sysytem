@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width: 900px; margin: 0 auto;">
+  <div class="page-header-row" style="margin-bottom: 20px;">
+    <div>
+      <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-secondary btn-sm" style="margin-bottom: 8px;">
+        &larr; Back to Invoices
+      </a>
+      <h2>Invoice Statement</h2>
+    </div>
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-secondary" onclick="window.print()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect width="12" height="8" x="6" y="14"></rect></svg>
+        <span>Print Invoice</span>
+      </button>
+
+      {% if invoice.status in ['Unpaid', 'Overdue'] %}
+      <form action="{{ url_for('invoices.pay_invoice', invoice_id=invoice.id) }}" method="POST">
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+          <span>Process Payment Now</span>
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- The printable SaaS Invoice Box -->
+  <div class="card-table-wrapper" style="padding: 48px; background: #ffffff;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid var(--border-light); padding-bottom: 24px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <div class="brand-glyph" style="width: 30px; height: 30px; font-size: 0.95rem;">B</div>
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">Brightloop Technologies</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+          548 Market St, Suite 34000<br>
+          San Francisco, CA 94104<br>
+          billing@brightloop.io
+        </p>
+      </div>
+
+      <div style="text-align: right;">
+        <span class="badge-status badge-{{ invoice.status | lower }}" style="font-size: 0.85rem; margin-bottom: 8px;">
+          <span class="status-dot"></span>
+          {{ invoice.status }}
+        </span>
+        <div class="cell-code" style="font-size: 1rem; font-weight: 700;">{{ invoice.invoice_number }}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Issued: {{ invoice.issue_date | date }}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted);">Due: {{ invoice.due_date | date }}</div>
+      </div>
+    </div>
+
+    <!-- Billed To -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 36px;">
+      <div>
+        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Billed To:</span>
+        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-top: 4px;">{{ invoice.customer_name }}</h4>
+        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 2px;">{{ invoice.company_name or 'Enterprise Customer' }}</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">{{ invoice.customer_email }}</div>
+        {% if invoice.customer_address %}
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">{{ invoice.customer_address }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Subscription Context:</span>
+        <div style="font-size: 0.95rem; font-weight: 600; margin-top: 4px; color: var(--text-main);">
+          {{ invoice.product_name }} — {{ invoice.plan_name }}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--brand-teal); margin-top: 2px;">
+          Ref: {{ invoice.subscription_number }} ({{ invoice.billing_cycle }})
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Items Table -->
+    <table class="data-table" style="margin-bottom: 28px;">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Interval</th>
+          <th>Rate</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>{{ invoice.product_name }} - {{ invoice.plan_name }}</strong>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Standard recurring SaaS license fee</div>
+          </td>
+          <td>{{ invoice.billing_cycle }}</td>
+          <td>{{ invoice.subtotal | currency(invoice.currency) }}</td>
+          <td style="text-align: right; font-weight: 600;">{{ invoice.subtotal | currency(invoice.currency) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals Summary -->
+    <div style="display: flex; justify-content: flex-end;">
+      <div style="width: 320px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+          <span style="color: var(--text-secondary);">Subtotal:</span>
+          <span>{{ invoice.subtotal | currency(invoice.currency) }}</span>
+        </div>
+
+        {% if invoice.discount_amount > 0 %}
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--status-active-text);">
+          <span>Promotional Discount:</span>
+          <span>-{{ invoice.discount_amount | currency(invoice.currency) }}</span>
+        </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+          <span style="color: var(--text-secondary);">Estimated Tax (8%):</span>
+          <span>+{{ invoice.tax_amount | currency(invoice.currency) }}</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 800; border-top: 2px solid var(--border-light); padding-top: 12px; color: var(--text-main);">
+          <span>Total Due:</span>
+          <span style="color: var(--brand-teal);">{{ invoice.total_due | currency(invoice.currency) }}</span>
+        </div>
+
+        {% if invoice.status == 'Paid' %}
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--status-active-text); font-weight: 600;">
+          <span>Amount Settled:</span>
+          <span>{{ invoice.amount_paid | currency(invoice.currency) }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

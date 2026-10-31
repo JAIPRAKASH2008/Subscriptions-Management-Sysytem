@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Plans & Pricing Catalog{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Subscription Plans & Tiers</h1>
+      <p>Configure pricing models, recurring billing intervals, and feature entitlements.</p>
+    </div>
+    {% if current_role in ['Admin', 'Staff'] %}
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-primary" data-modal-open="createPlanModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Add Pricing Plan</span>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pricing Cards Grid -->
+  <div class="pricing-grid">
+    {% for plan in plans %}
+    <div class="plan-card {% if plan.is_popular %}featured{% endif %}">
+      {% if plan.is_popular %}
+      <div class="plan-popular-pill">Most Popular</div>
+      {% endif %}
+
+      <div class="plan-header">
+        <span class="plan-product-badge">{{ plan.product_name }}</span>
+        <h3 class="plan-name">{{ plan.name }}</h3>
+        <span class="cell-code" style="font-size: 0.72rem; margin-top: 4px; display: inline-block;">{{ plan.code }}</span>
+      </div>
+
+      <div class="plan-pricing-box">
+        <span class="plan-currency">$</span>
+        <span class="plan-amount">{{ "{:,.0f}".format(plan.price) }}</span>
+        <span class="plan-interval">/ {{ plan.billing_interval | lower }}</span>
+      </div>
+
+      <ul class="plan-features-list">
+        {% for feat in (plan.features or '').split(',') %}
+          {% if feat %}
+          <li class="plan-feature-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>{{ feat }}</span>
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+
+      <div style="margin-top: auto;">
+        {% if current_role in ['Admin', 'Staff'] %}
+        <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="btn {% if plan.is_popular %}btn-primary{% else %}btn-secondary{% endif %} btn-block">
+          Select Plan & Provision
+        </a>
+        {% else %}
+        <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="btn btn-primary btn-block">
+          Upgrade to {{ plan.name }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal: Create New Plan -->
+{% if current_role in ['Admin', 'Staff'] %}
+<div class="modal-overlay" id="createPlanModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Plan Tier</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('plans.create_plan') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="planProduct">Target Product</label>
+          <select name="product_id" id="planProduct" class="form-control" required>
+            <option value="">-- Choose Product --</option>
+            {% for prod in products %}
+            <option value="{{ prod.id }}">{{ prod.name }} ({{ prod.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="planName">Plan Name</label>
+            <input type="text" name="name" id="planName" class="form-control" placeholder="e.g. Scale Pro" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="planCode">Unique Plan Code</label>
+            <input type="text" name="code" id="planCode" class="form-control" placeholder="PLAN-SCALE-MO" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="planInterval">Cadence</label>
+            <select name="billing_interval" id="planInterval" class="form-control">
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="planPrice">Price ($)</label>
+            <input type="number" step="0.01" name="price" id="planPrice" class="form-control" placeholder="199.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="planTrial">Trial Days</label>
+            <input type="number" name="trial_days" id="planTrial" class="form-control" value="14">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="planFeatures">Features List (Comma-separated)</label>
+          <textarea name="features" id="planFeatures" class="form-control" rows="3" placeholder="Up to 10 Users, Real-time telemetry, 24/7 SLA Support"></textarea>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" name="is_popular" id="isPopularCheckbox" value="1">
+          <label for="isPopularCheckbox" style="font-size: 0.9rem; font-weight: 500;">Highlight as 'Most Popular' badge</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Plan</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

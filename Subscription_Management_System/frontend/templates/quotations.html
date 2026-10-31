@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Quotations & Enterprise Proposals{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Quotations & Proposals</h1>
+      <p>Custom pricing agreements, enterprise proposals, and contract negotiation stages.</p>
+    </div>
+  </div>
+
+  <div class="card-table-wrapper">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Quotation #</th>
+            <th>Customer & Account</th>
+            <th>Proposed Plan</th>
+            <th>Proposed Total</th>
+            <th>Valid Until</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in quotations %}
+          <tr>
+            <td><span class="cell-code">{{ q.quotation_number }}</span></td>
+            <td>
+              <div class="cell-entity">
+                <div class="cell-avatar">{{ q.customer_name[0] }}</div>
+                <div class="cell-details">
+                  <h5>{{ q.customer_name }}</h5>
+                  <span>{{ q.company_name }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ q.product_name }} - {{ q.plan_name }}</td>
+            <td><strong>{{ q.total_amount | currency(q.currency) }}</strong></td>
+            <td>{{ q.valid_until | date }}</td>
+            <td>
+              <span class="badge-status badge-{{ q.status | lower }}">
+                <span class="status-dot"></span>
+                {{ q.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              {% if q.status == 'Sent' and current_role in ['Admin', 'Staff'] %}
+              <span class="btn btn-secondary btn-sm" style="color: var(--brand-teal);">Pending Acceptance</span>
+              {% elif q.status == 'Accepted' %}
+              <span class="badge-status badge-confirmed">Accepted</span>
+              {% else %}
+              <span class="btn btn-secondary btn-sm">{{ q.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">
+              No quotations recorded.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

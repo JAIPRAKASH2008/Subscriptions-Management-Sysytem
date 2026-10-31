@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue Analytics & Reports{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Revenue Intelligence & Financial Analytics</h1>
+      <p>Cohort retention, churn modeling, and MRR expansion metrics.</p>
+    </div>
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-secondary" onclick="window.print()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect width="12" height="8" x="6" y="14"></rect></svg>
+        <span>Print Statement</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Net Revenue Retention (NRR)</span>
+        <div class="kpi-icon-wrapper emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">118.4%</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">+4.2%</span>
+        <span class="trend-text">Top decile SaaS benchmark</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Gross Churn Rate</span>
+        <div class="kpi-icon-wrapper cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">0.82%</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">-0.15%</span>
+        <span class="trend-text">Well below industry average</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Average Revenue Per User (ARPU)</span>
+        <div class="kpi-icon-wrapper blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        </div>
+      </div>
+      <div class="kpi-value">$1,280</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">+18.0%</span>
+        <span class="trend-text">Driven by Enterprise tier upgrades</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Subscriptions Management{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Subscription Contracts</h1>
+      <p>Manage subscription life-cycles from quotation proposal to active recurring renewal.</p>
+    </div>
+    {% if current_role in ['Admin', 'Staff'] %}
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-primary" data-modal-open="createSubModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Provision Subscription</span>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Status Filter Toolbar & Search -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div class="topbar-search-box" style="width: 280px;">
+        <svg class="topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="tableSearchInput" placeholder="Filter by customer, ID, or product...">
+      </div>
+
+      <div class="table-toolbar-actions">
+        <div class="filter-pill-group">
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='All') }}" class="filter-pill {% if selected_status == 'All' %}active{% endif %}">All</a>
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='Active') }}" class="filter-pill {% if selected_status == 'Active' %}active{% endif %}">Active</a>
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='Confirmed') }}" class="filter-pill {% if selected_status == 'Confirmed' %}active{% endif %}">Confirmed</a>
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='Quotation') }}" class="filter-pill {% if selected_status == 'Quotation' %}active{% endif %}">Quotation</a>
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='Draft') }}" class="filter-pill {% if selected_status == 'Draft' %}active{% endif %}">Draft</a>
+          <a href="{{ url_for('subscriptions.list_subscriptions', status='Closed') }}" class="filter-pill {% if selected_status == 'Closed' %}active{% endif %}">Closed</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table without vertical borders -->
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Subscription #</th>
+            <th>Customer & Enterprise</th>
+            <th>Product Tier</th>
+            <th>Cycle</th>
+            <th>Subtotal</th>
+            <th>Tax & Discounts</th>
+            <th>Net Total</th>
+            <th>Status</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="cell-code" style="font-weight: 600;">
+                {{ sub.subscription_number }}
+              </a>
+            </td>
+            <td>
+              <div class="cell-entity">
+                <div class="cell-avatar">{{ sub.customer_name[0] }}</div>
+                <div class="cell-details">
+                  <h5>{{ sub.customer_name }}</h5>
+                  <span>{{ sub.company_name or sub.customer_email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="cell-details">
+                <h5 style="color: var(--text-main);">{{ sub.product_name }}</h5>
+                <span>{{ sub.plan_name }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; font-weight: 500;">{{ sub.billing_cycle }}</span>
+            </td>
+            <td>
+              <span style="color: var(--text-secondary);">{{ sub.subtotal | currency(sub.currency) }}</span>
+            </td>
+            <td>
+              <div style="font-size: 0.78rem;">
+                {% if sub.discount_amount > 0 %}
+                <span style="color: var(--status-active-text);">-{{ sub.discount_amount | currency(sub.currency) }}</span> /
+                {% endif %}
+                <span style="color: var(--text-muted);">+{{ sub.tax_amount | currency(sub.currency) }} tax</span>
+              </div>
+            </td>
+            <td>
+              <strong style="color: var(--text-main); font-size: 0.95rem;">
+                {{ sub.total_amount | currency(sub.currency) }}
+              </strong>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ sub.status | lower }}">
+                <span class="status-dot"></span>
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="btn btn-secondary btn-sm" title="View Detailed Breakdown">
+                  View
+                </a>
+
+                {% if current_role in ['Admin', 'Staff'] %}
+                  {% if sub.status == 'Quotation' %}
+                  <a href="{{ url_for('subscriptions.update_status', subscription_id=sub.id, new_status='Confirmed') }}" class="btn btn-solid-teal btn-sm">
+                    Confirm
+                  </a>
+                  {% elif sub.status == 'Confirmed' %}
+                  <a href="{{ url_for('subscriptions.update_status', subscription_id=sub.id, new_status='Active') }}" class="btn btn-primary btn-sm">
+                    Activate
+                  </a>
+                  {% elif sub.status == 'Active' %}
+                  <a href="{{ url_for('subscriptions.update_status', subscription_id=sub.id, new_status='Closed') }}" class="btn btn-ghost btn-sm" style="color: #ef4444;" onclick="return confirm('Are you sure you want to close this subscription?')">
+                    Close
+                  </a>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-muted);">
+              No subscriptions found matching the selected criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Provision New Subscription -->
+{% if current_role in ['Admin', 'Staff'] %}
+<div class="modal-overlay" id="createSubModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Provision New Subscription</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('subscriptions.create_subscription') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="subCustomer">Customer Account</label>
+          <select name="customer_id" id="subCustomer" class="form-control" required>
+            <option value="">-- Select Customer --</option>
+            {% for c in customers %}
+            <option value="{{ c.id }}">{{ c.full_name }} ({{ c.company_name or c.email }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subPlan">Product Plan Tier</label>
+          <select name="plan_id" id="subPlan" class="form-control" required>
+            <option value="">-- Select Product Tier --</option>
+            {% for p in plans %}
+            <option value="{{ p.id }}">{{ p.product_name }} — {{ p.name }} ({{ p.price | currency(p.currency) }} / {{ p.billing_interval }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="subStatus">Initial Lifecycle Status</label>
+            <select name="status" id="subStatus" class="form-control">
+              <option value="Active">Active (Provision & Bill Immediately)</option>
+              <option value="Confirmed">Confirmed (Approved PO)</option>
+              <option value="Quotation">Quotation (Awaiting Sign-off)</option>
+              <option value="Draft">Draft (Internal Review)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="subPromo">Discount / Promo Code</label>
+            <input type="text" name="discount_code" id="subPromo" class="form-control" placeholder="e.g. WELCOME20">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subStartDate">Contract Start Date</label>
+          <input type="date" name="start_date" id="subStartDate" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subNotes">Contract Notes / PO Reference</label>
+          <textarea name="notes" id="subNotes" class="form-control" rows="2" placeholder="e.g. Approved under master services agreement MSA-2026-901"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Provision Subscription</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

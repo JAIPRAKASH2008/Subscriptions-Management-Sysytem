@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Discounts & Promotions{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Discount Coupons & Promos</h1>
+      <p>Configure percentage discounts, flat fee credits, and limited-time campaigns.</p>
+    </div>
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-primary" data-modal-open="createDiscountModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Add Promo Code</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-table-wrapper">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Coupon Code</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Description</th>
+            <th>Redemptions</th>
+            <th>Expiration</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in discounts %}
+          <tr>
+            <td>
+              <span class="cell-code" style="font-weight: 700; color: var(--brand-teal);">{{ d.code }}</span>
+            </td>
+            <td style="text-transform: capitalize;">{{ d.discount_type }}</td>
+            <td>
+              <strong style="color: var(--status-active-text);">
+                {% if d.discount_type == 'percentage' %}{{ d.value }}% Off{% else %}${{ d.value }} Flat{% endif %}
+              </strong>
+            </td>
+            <td>{{ d.description or '—' }}</td>
+            <td>
+              <span>{{ d.times_used }}</span>
+              {% if d.usage_limit %}<span style="color: var(--text-muted);">/ {{ d.usage_limit }} max</span>{% endif %}
+            </td>
+            <td>{{ d.valid_until | date }}</td>
+            <td>
+              <span class="badge-status {% if d.is_active %}badge-active{% else %}badge-closed{% endif %}">
+                <span class="status-dot"></span>
+                {% if d.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Discount -->
+<div class="modal-overlay" id="createDiscountModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Promo Code</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('discounts.create_discount') }}" method="POST">
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="discCode">Coupon Code</label>
+            <input type="text" name="code" id="discCode" class="form-control" placeholder="e.g. SUMMER25" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="discType">Discount Type</label>
+            <select name="discount_type" id="discType" class="form-control">
+              <option value="percentage">Percentage (%)</option>
+              <option value="fixed">Fixed Dollar ($)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="discVal">Value</label>
+            <input type="number" step="0.01" name="value" id="discVal" class="form-control" placeholder="20" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="discLimit">Max Usage Limit (Optional)</label>
+            <input type="number" name="usage_limit" id="discLimit" class="form-control" placeholder="100">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="discExp">Expiration Date</label>
+          <input type="date" name="valid_until" id="discExp" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="discDesc">Description</label>
+          <input type="text" name="description" id="discDesc" class="form-control" placeholder="Promotional credit description">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Promo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

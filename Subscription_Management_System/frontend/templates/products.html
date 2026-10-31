@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Products Catalog{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Software Products & Modules</h1>
+      <p>Configure product lines, core modules, and billing categories.</p>
+    </div>
+    {% if current_role in ['Admin', 'Staff'] %}
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-primary" data-modal-open="createProductModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Add Product</span>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+    {% for product in products %}
+    <div class="kpi-card" style="display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div class="kpi-icon-wrapper cyan" style="width: 44px; height: 44px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </div>
+        <span class="cell-code">{{ product.code }}</span>
+      </div>
+
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">{{ product.name }}</h3>
+      <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--brand-teal); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 12px; display: block;">{{ product.category }}</span>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; flex: 1;">{{ product.description }}</p>
+
+      <div style="border-top: 1px solid var(--border-light); padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">{{ product.plan_count }} Tiers Available</span>
+        <a href="{{ url_for('plans.list_plans', product_id=product.id) }}" class="btn btn-secondary btn-sm">View Plans &rarr;</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal: Add Product -->
+{% if current_role in ['Admin', 'Staff'] %}
+<div class="modal-overlay" id="createProductModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Software Product</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('products.create_product') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="prodName">Product Name</label>
+          <input type="text" name="name" id="prodName" class="form-control" placeholder="e.g. Brightloop Observability" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="prodCode">Product Code / SKU</label>
+          <input type="text" name="code" id="prodCode" class="form-control" placeholder="PROD-OBS-01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="prodCategory">Category</label>
+          <select name="category" id="prodCategory" class="form-control">
+            <option value="Security & Compliance">Security & Compliance</option>
+            <option value="Financial Infrastructure">Financial Infrastructure</option>
+            <option value="AI & Automation">AI & Automation</option>
+            <option value="Developer Tools">Developer Tools</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="prodDesc">Description</label>
+          <textarea name="description" id="prodDesc" class="form-control" rows="3" placeholder="Brief executive summary of module capabilities..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

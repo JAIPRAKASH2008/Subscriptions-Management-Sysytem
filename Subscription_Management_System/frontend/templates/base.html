@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Brightloop{% endblock %} — Subscription & Revenue Infrastructure</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Left Navigation Sidebar (260px Fixed Dark Slate) -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-brand">
+        <div class="brand-glyph">B</div>
+        <div class="brand-title-box">
+          <h3>Brightloop</h3>
+          <span>Revenue OS</span>
+        </div>
+      </div>
+
+      <div class="sidebar-nav-scroll">
+        <div class="nav-section-title">Core Operations</div>
+        
+        {% if current_role and current_role.upper() in ['ADMIN', 'STAFF'] %}
+        <a href="{{ url_for('dashboard.admin_dashboard') }}" class="nav-item-link {% if current_page == 'dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('dashboard.customer_dashboard') }}" class="nav-item-link {% if current_page == 'customer_dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+            <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+            <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+            <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+          </svg>
+          <span>My Portal</span>
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="nav-item-link {% if current_page == 'subscriptions' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+            <line x1="12" y1="22" x2="12" y2="12"></line>
+          </svg>
+          <span>Subscriptions</span>
+        </a>
+
+        <a href="{{ url_for('invoices.list_invoices') }}" class="nav-item-link {% if current_page == 'invoices' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Invoices</span>
+        </a>
+
+        <a href="{{ url_for('payments.list_payments') }}" class="nav-item-link {% if current_page == 'payments' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+          </svg>
+          <span>Payments</span>
+        </a>
+
+        <div class="nav-section-title">Catalog & Quotes</div>
+
+        <a href="{{ url_for('plans.list_plans') }}" class="nav-item-link {% if current_page == 'plans' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20"></path>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+          <span>Plans & Pricing</span>
+        </a>
+
+        <a href="{{ url_for('products.list_products') }}" class="nav-item-link {% if current_page == 'products' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span>Products</span>
+        </a>
+
+        <a href="{{ url_for('quotations.list_quotations') }}" class="nav-item-link {% if current_page == 'quotations' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>Quotations</span>
+        </a>
+
+        {% if current_role and current_role.upper() in ['ADMIN', 'STAFF'] %}
+        <div class="nav-section-title">Revenue Management</div>
+        <a href="{{ url_for('discounts.list_discounts') }}" class="nav-item-link {% if current_page == 'discounts' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="5" x2="5" y2="19"></line>
+            <circle cx="6.5" cy="6.5" r="2.5"></circle>
+            <circle cx="17.5" cy="17.5" r="2.5"></circle>
+          </svg>
+          <span>Discounts & Promos</span>
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- User footer inside sidebar -->
+      <div class="sidebar-user-footer">
+        <div class="sidebar-user-info">
+          <div class="user-avatar-circle">
+            {{ current_user[0] if current_user else 'U' }}
+          </div>
+          <div class="user-details-mini">
+            <h4>{{ current_user or 'User' }}</h4>
+            <span>{{ current_role or 'Account' }}</span>
+          </div>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" title="Sign Out" style="color: #94a3b8; display: flex; align-items: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Top sticky frosted navbar -->
+      <header class="app-topbar">
+        <div class="topbar-search-box">
+          <svg class="topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="topGlobalSearch" placeholder="Search subscriptions, customers, plans... (⌘K)">
+        </div>
+
+        <div class="topbar-actions">
+          <div class="icon-action-btn" title="Live System Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <div class="notification-badge-dot"></div>
+          </div>
+
+          <div class="topbar-user-pill">
+            <div class="user-avatar-circle" style="width: 28px; height: 28px; font-size: 0.75rem;">
+              {{ current_user[0] if current_user else 'U' }}
+            </div>
+            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);">{{ current_user }}</span>
+            <span class="topbar-role-badge">{{ current_role }}</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Flash Notification Messages -->
+      <div style="padding: 24px 32px 0;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message flash-{{ category }}">
+                {% if category == 'success' %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                {% else %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                {% endif %}
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Page Specific Content Block -->
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+

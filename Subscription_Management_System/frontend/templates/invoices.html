@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Invoices & Billing Statements{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Invoices & Statements</h1>
+      <p>Automated billing statements, tax receipts, and payment collection tracking.</p>
+    </div>
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-secondary" onclick="window.print()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span>Export CSV</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI summary bar -->
+  <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Settled Collections</span>
+        <div class="kpi-icon-wrapper emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ metrics.total_collected | currency }}</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">{{ metrics.paid_count }} Paid</span>
+        <span class="trend-text">cleared successfully</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Outstanding Receivables</span>
+        <div class="kpi-icon-wrapper amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ metrics.total_outstanding | currency }}</div>
+      <div class="kpi-footer">
+        <span class="trend-text">Across active client billing cycles</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Overdue Invoices</span>
+        <div class="kpi-icon-wrapper {% if metrics.overdue_count > 0 %}amber{% else %}emerald{% endif %}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ metrics.overdue_count }}</div>
+      <div class="kpi-footer">
+        <span class="trend-badge {% if metrics.overdue_count > 0 %}negative{% else %}positive{% endif %}">
+          {{ metrics.overdue_count }} require dunning follow-up
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoices Table -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div class="topbar-search-box" style="width: 280px;">
+        <svg class="topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="tableSearchInput" placeholder="Search invoice #, customer...">
+      </div>
+
+      <div class="table-toolbar-actions">
+        <div class="filter-pill-group">
+          <a href="{{ url_for('invoices.list_invoices', status='All') }}" class="filter-pill {% if selected_status == 'All' %}active{% endif %}">All</a>
+          <a href="{{ url_for('invoices.list_invoices', status='Paid') }}" class="filter-pill {% if selected_status == 'Paid' %}active{% endif %}">Paid</a>
+          <a href="{{ url_for('invoices.list_invoices', status='Unpaid') }}" class="filter-pill {% if selected_status == 'Unpaid' %}active{% endif %}">Unpaid</a>
+          <a href="{{ url_for('invoices.list_invoices', status='Overdue') }}" class="filter-pill {% if selected_status == 'Overdue' %}active{% endif %}">Overdue</a>
+          <a href="{{ url_for('invoices.list_invoices', status='Draft') }}" class="filter-pill {% if selected_status == 'Draft' %}active{% endif %}">Draft</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Customer & Account</th>
+            <th>Subscription</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Total Due</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td>
+              <a href="{{ url_for('invoices.view_invoice', invoice_id=inv.id) }}" class="cell-code" style="font-weight: 600;">
+                {{ inv.invoice_number }}
+              </a>
+            </td>
+            <td>
+              <div class="cell-entity">
+                <div class="cell-avatar">{{ inv.customer_name[0] }}</div>
+                <div class="cell-details">
+                  <h5>{{ inv.customer_name }}</h5>
+                  <span>{{ inv.company_name or inv.customer_email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="cell-code" style="font-size: 0.75rem;">{{ inv.subscription_number }}</span>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ inv.issue_date | date }}</span>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ inv.due_date | date }}</span>
+            </td>
+            <td>
+              <strong style="color: var(--text-main); font-size: 0.95rem;">
+                {{ inv.total_due | currency(inv.currency) }}
+              </strong>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ inv.status | lower }}">
+                <span class="status-dot"></span>
+                {{ inv.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <a href="{{ url_for('invoices.view_invoice', invoice_id=inv.id) }}" class="btn btn-secondary btn-sm">
+                  View
+                </a>
+                {% if inv.status in ['Unpaid', 'Overdue'] %}
+                <form action="{{ url_for('invoices.pay_invoice', invoice_id=inv.id) }}" method="POST" style="display: inline;">
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    Settle / Pay
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-muted);">
+              No invoices match the selected filter.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

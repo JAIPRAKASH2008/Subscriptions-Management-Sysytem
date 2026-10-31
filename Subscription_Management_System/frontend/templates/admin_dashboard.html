@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Executive Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Top Page Header -->
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Revenue Operations Overview</h1>
+      <p>Real-time lifecycle telemetry, recurring billing velocity, and team access.</p>
+    </div>
+    <div class="page-actions-group">
+      <button type="button" class="btn btn-secondary" data-modal-open="addStaffModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        <span>+ Add Staff Member</span>
+      </button>
+      <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ New Subscription</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Stat Cards Grid -->
+  <div class="kpi-grid">
+    <!-- Card 1: MRR -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Monthly Recurring Revenue</span>
+        <div class="kpi-icon-wrapper cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ sub_metrics.mrr | currency }}</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          +14.2%
+        </span>
+        <span class="trend-text">vs previous month</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Active Subscriptions -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Active Subscriptions</span>
+        <div class="kpi-icon-wrapper emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ sub_metrics.active_count }} <span style="font-size: 1rem; color: var(--text-muted); font-weight: 400;">/ {{ total_customers }} customers</span></div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          +{{ sub_metrics.confirmed_count }} Confirmed
+        </span>
+        <span class="trend-text">ready to invoice</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Invoiced Collected -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Total Settled Revenue</span>
+        <div class="kpi-icon-wrapper blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ inv_metrics.total_collected | currency }}</div>
+      <div class="kpi-footer">
+        <span class="trend-badge positive">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          {{ inv_metrics.paid_count }} Invoices
+        </span>
+        <span class="trend-text">settled without dispute</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Outstanding & Overdue -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Receivables Pending</span>
+        <div class="kpi-icon-wrapper amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+      </div>
+      <div class="kpi-value">{{ inv_metrics.total_outstanding | currency }}</div>
+      <div class="kpi-footer">
+        <span class="trend-badge {% if inv_metrics.overdue_count > 0 %}negative{% else %}positive{% endif %}">
+          {{ inv_metrics.overdue_count }} Overdue
+        </span>
+        <span class="trend-text">automated dunning active</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Subscriptions Table -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>Active & Pipeline Subscriptions</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Real-time contract statuses across enterprise accounts (Click customer to view profile)</p>
+      </div>
+
+      <div class="table-toolbar-actions">
+        <div class="filter-pill-group">
+          <button type="button" class="filter-pill active" data-status="all">All</button>
+          <button type="button" class="filter-pill" data-status="active">Active</button>
+          <button type="button" class="filter-pill" data-status="confirmed">Confirmed</button>
+          <button type="button" class="filter-pill" data-status="quotation">Quotation</button>
+          <button type="button" class="filter-pill" data-status="draft">Draft</button>
+        </div>
+        <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="btn btn-secondary btn-sm">View All</a>
+      </div>
+    </div>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Subscription #</th>
+            <th>Customer & Company</th>
+            <th>Product & Tier</th>
+            <th>Cycle</th>
+            <th>Recurring Total</th>
+            <th>Next Renewal</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in recent_subscriptions %}
+          <tr>
+            <td>
+              <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="cell-code" style="font-weight: 600;">
+                {{ sub.subscription_number }}
+              </a>
+            </td>
+            <td>
+              <a href="{{ url_for('dashboard.view_customer', customer_id=sub.customer_id) }}" class="cell-entity" style="text-decoration: none;">
+                <div class="cell-avatar">{{ sub.customer_name[0] }}</div>
+                <div class="cell-details">
+                  <h5 style="color: var(--brand-teal); font-weight: 600;">{{ sub.customer_name }}</h5>
+                  <span>{{ sub.company_name or sub.customer_email }}</span>
+                </div>
+              </a>
+            </td>
+            <td>
+              <div class="cell-details">
+                <h5 style="color: var(--text-main);">{{ sub.product_name }}</h5>
+                <span>{{ sub.plan_name }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="font-weight: 500; font-size: 0.85rem;">{{ sub.billing_cycle }}</span>
+            </td>
+            <td>
+              <strong style="font-size: 0.95rem; color: var(--text-main);">{{ sub.total_amount | currency(sub.currency) }}</strong>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ sub.next_billing_date | date }}</span>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ sub.status | lower }}">
+                <span class="status-dot"></span>
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="btn btn-secondary btn-sm">
+                Details
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">
+              No subscription records located.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Staff & Administrative Team Management Section -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>Team & Staff Access Management</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Administrators and Billing Staff with operator credentials</p>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" data-modal-open="addStaffModal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Add Staff Member</span>
+      </button>
+    </div>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Work Email</th>
+            <th>System Role</th>
+            <th>Organization</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in staff_members %}
+          <tr>
+            <td>
+              <div class="cell-entity">
+                <div class="cell-avatar" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); color: var(--brand-teal);">
+                  {{ member.full_name[0] }}
+                </div>
+                <div class="cell-details">
+                  <h5>{{ member.full_name }}</h5>
+                  <span>@{{ member.username }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span style="font-size: 0.88rem; color: var(--text-secondary);">{{ member.email }}</span>
+            </td>
+            <td>
+              <span class="badge-status {% if member.role.upper() == 'ADMIN' %}badge-confirmed{% else %}badge-active{% endif %}">
+                <span class="status-dot"></span>
+                {{ member.role }}
+              </span>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-muted);">{{ member.company_name or 'Brightloop Internal' }}</span>
+            </td>
+            <td>
+              <span class="badge-status badge-active">
+                <span class="status-dot"></span>
+                Active
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Side-by-side Tables: Invoices & Payments -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Recent Invoices -->
+    <div class="card-table-wrapper" style="margin-bottom: 0;">
+      <div class="table-toolbar">
+        <div>
+          <h3>Recent Invoices</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">Billed cycle statements</p>
+        </div>
+        <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-secondary btn-sm">All Invoices</a>
+      </div>
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Customer</th>
+              <th>Due Date</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in recent_invoices %}
+            <tr>
+              <td><span class="cell-code">{{ inv.invoice_number }}</span></td>
+              <td>{{ inv.customer_name }}</td>
+              <td>{{ inv.due_date | date }}</td>
+              <td><strong>{{ inv.total_due | currency(inv.currency) }}</strong></td>
+              <td>
+                <span class="badge-status badge-{{ inv.status | lower }}">
+                  <span class="status-dot"></span>
+                  {{ inv.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="card-table-wrapper" style="margin-bottom: 0;">
+      <div class="table-toolbar">
+        <div>
+          <h3>Settled Payments</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">Cleared gateway transactions</p>
+        </div>
+        <a href="{{ url_for('payments.list_payments') }}" class="btn btn-secondary btn-sm">All Payments</a>
+      </div>
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Method</th>
+              <th>Amount</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pay in recent_payments %}
+            <tr>
+              <td><span class="cell-code">{{ pay.payment_reference }}</span></td>
+              <td>{{ pay.payment_method }}</td>
+              <td><strong style="color: var(--status-active-text);">{{ pay.amount | currency(pay.currency) }}</strong></td>
+              <td>{{ pay.payment_date | date }}</td>
+              <td>
+                <span class="badge-status badge-{{ pay.transaction_status | lower }}">
+                  <span class="status-dot"></span>
+                  {{ pay.transaction_status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add New Staff Member -->
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Team Member</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('auth.create_user') }}" method="POST">
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="staffFullName">Full Name *</label>
+            <input type="text" name="full_name" id="staffFullName" class="form-control" placeholder="e.g. Rachel Adams" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="staffRole">Role Assignment *</label>
+            <select name="role" id="staffRole" class="form-control" required>
+              <option value="Staff" selected>Staff (Billing Operator)</option>
+              <option value="Admin">Admin (Full System Privilege)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="staffEmail">Work Email *</label>
+          <input type="email" name="email" id="staffEmail" class="form-control" placeholder="rachel.adams@brightloop.io" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="staffPassword">Initial Password *</label>
+          <input type="password" name="password" id="staffPassword" class="form-control" value="Staff@1234#" placeholder="Minimum 8 chars with upper, lower, special" required>
+          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">
+            Default temporary password: <code>Staff@1234#</code> (Must include uppercase, lowercase, number/special).
+          </small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="staffCompany">Department / Team</label>
+            <input type="text" name="company_name" id="staffCompany" class="form-control" value="Brightloop Operations">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="staffPhone">Contact Phone</label>
+            <input type="tel" name="phone" id="staffPhone" class="form-control" placeholder="+1 (555) 019-3829">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          <span>Create Member</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

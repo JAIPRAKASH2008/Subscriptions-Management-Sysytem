@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Customer — {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header-row">
+    <div>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+        <h1>{{ customer.full_name }}</h1>
+        <span class="topbar-role-badge" style="background: var(--brand-teal-50); color: var(--brand-teal);">
+          {{ customer.role }} Account
+        </span>
+      </div>
+      <p>{{ customer.company_name or 'Enterprise Client' }} &bull; Member since {{ customer.created_at | date }}</p>
+    </div>
+
+    <div class="page-actions-group">
+      <a href="{{ url_for('dashboard.admin_dashboard') }}" class="btn btn-secondary">
+        &larr; Back to Dashboard
+      </a>
+      <button type="button" class="btn btn-primary" data-modal-open="createSubModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Provision Subscription</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Customer Overview Card -->
+  <div class="card-table-wrapper" style="padding: 24px; margin-bottom: 28px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+      <div>
+        <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Corporate Email</span>
+        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">{{ customer.email }}</div>
+      </div>
+      <div>
+        <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Phone</span>
+        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">{{ customer.phone or 'Not provided' }}</div>
+      </div>
+      <div>
+        <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Account Status</span>
+        <div style="margin-top: 4px;">
+          <span class="badge-status {% if customer.is_active %}badge-active{% else %}badge-closed{% endif %}">
+            <span class="status-dot"></span>
+            {% if customer.is_active %}Active Account{% else %}Suspended{% endif %}
+          </span>
+        </div>
+      </div>
+      <div>
+        <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Active Subscriptions</span>
+        <div style="font-size: 1.1rem; font-weight: 800; color: var(--brand-teal); margin-top: 4px;">{{ subscriptions | length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscriptions Table -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>Active & Provisioned Subscriptions</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Software subscriptions tied directly to {{ customer.full_name }}</p>
+      </div>
+    </div>
+
+    {% if subscriptions and subscriptions | length > 0 %}
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Subscription #</th>
+            <th>Product Tier</th>
+            <th>Cadence</th>
+            <th>Total Amount</th>
+            <th>Next Renewal</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <span class="cell-code" style="font-weight: 600;">{{ sub.subscription_number }}</span>
+            </td>
+            <td>
+              <div class="cell-details">
+                <h5 style="color: var(--text-main);">{{ sub.product_name }}</h5>
+                <span style="color: var(--brand-teal);">{{ sub.plan_name }}</span>
+              </div>
+            </td>
+            <td>{{ sub.billing_cycle }}</td>
+            <td><strong>{{ sub.total_amount | currency(sub.currency) }}</strong></td>
+            <td>{{ sub.next_billing_date | date }}</td>
+            <td>
+              <span class="badge-status badge-{{ sub.status | lower }}">
+                <span class="status-dot"></span>
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="btn btn-secondary btn-sm">
+                View Details
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding: 48px 24px; text-align: center; color: var(--text-muted);">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; opacity: 0.6; display: block;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+      <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">No active subscriptions found for this customer</h4>
+      <p style="font-size: 0.88rem; margin-bottom: 16px;">This customer does not have any subscriptions provisioned yet.</p>
+      <button type="button" class="btn btn-primary btn-sm" data-modal-open="createSubModal">+ Provision New Subscription</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Invoices Table -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>Billing Invoices</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Customer statement ledger</p>
+      </div>
+    </div>
+    {% if invoices and invoices | length > 0 %}
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Total Due</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td><span class="cell-code">{{ inv.invoice_number }}</span></td>
+            <td>{{ inv.issue_date | date }}</td>
+            <td>{{ inv.due_date | date }}</td>
+            <td><strong>{{ inv.total_due | currency(inv.currency) }}</strong></td>
+            <td>
+              <span class="badge-status badge-{{ inv.status | lower }}">
+                <span class="status-dot"></span>
+                {{ inv.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('invoices.view_invoice', invoice_id=inv.id) }}" class="btn btn-secondary btn-sm">
+                View Receipt
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
+      No invoice statements recorded for this customer.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal: Provision New Subscription for this Customer -->
+<div class="modal-overlay" id="createSubModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Provision Subscription for {{ customer.full_name }}</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{{ url_for('subscriptions.create_subscription') }}" method="POST">
+      <input type="hidden" name="customer_id" value="{{ customer.id }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="planSelector">Select Plan Tier</label>
+          <select name="plan_id" id="planSelector" class="form-control" required>
+            <option value="">-- Choose Product & Tier --</option>
+            {% for p in plans %}
+            <option value="{{ p.id }}">{{ p.product_name }} — {{ p.name }} ({{ p.price | currency(p.currency) }} / {{ p.billing_interval }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="subStatus">Initial Status</label>
+            <select name="status" id="subStatus" class="form-control">
+              <option value="Active">Active (Provision Immediately)</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Quotation">Quotation</option>
+              <option value="Draft">Draft</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="subDiscount">Discount Code</label>
+            <input type="text" name="discount_code" id="subDiscount" class="form-control" placeholder="e.g. WELCOME20">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="startDatePicker">Start Date</label>
+          <input type="date" name="start_date" id="startDatePicker" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subNotes">Notes</label>
+          <textarea name="notes" id="subNotes" class="form-control" rows="2" placeholder="Internal remarks..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Provision Subscription</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

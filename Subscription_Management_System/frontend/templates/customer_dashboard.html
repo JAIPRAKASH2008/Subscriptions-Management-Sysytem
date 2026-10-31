@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Portal — My Subscriptions{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  {% if is_admin_view %}
+  <div class="flash-message flash-success" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong>Admin View:</strong> Viewing portal for customer <strong>{{ customer.full_name }}</strong> ({{ customer.email }} - {{ customer.company_name or 'N/A' }}).
+    </div>
+    <a href="{{ url_for('dashboard.admin_dashboard') }}" class="btn btn-secondary btn-sm">Return to Admin Dashboard</a>
+  </div>
+  {% endif %}
+
+  <div class="page-header-row">
+    <div class="page-title-box">
+      <h1>Customer Account Portal</h1>
+      <p>Manage your active enterprise software licenses, billing statements, and module upgrades.</p>
+    </div>
+    <div class="page-actions-group">
+      <a href="{{ url_for('plans.list_plans') }}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Browse Available Plans</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Active Subscriptions Section -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>My Active Subscriptions</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Current provisioned software licenses and upcoming renewals</p>
+      </div>
+      {% if subscriptions %}
+      <span class="badge-status badge-active">
+        <span class="status-dot"></span>
+        {{ subscriptions | length }} Active Service{% if subscriptions | length > 1 %}s{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if subscriptions and subscriptions | length > 0 %}
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Subscription #</th>
+            <th>Product & Tier</th>
+            <th>Billing Cycle</th>
+            <th>Recurring Amount</th>
+            <th>Next Renewal</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <span class="cell-code" style="font-weight: 600;">{{ sub.subscription_number }}</span>
+            </td>
+            <td>
+              <div class="cell-details">
+                <h5 style="color: var(--text-main); font-weight: 600;">{{ sub.product_name }}</h5>
+                <span style="color: var(--brand-teal); font-weight: 500;">{{ sub.plan_name }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; font-weight: 500;">{{ sub.billing_cycle }}</span>
+            </td>
+            <td>
+              <strong style="color: var(--text-main); font-size: 0.95rem;">
+                {{ sub.total_amount | currency(sub.currency) }}
+              </strong>
+            </td>
+            <td>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ sub.next_billing_date | date }}</span>
+            </td>
+            <td>
+              <span class="badge-status badge-{{ sub.status | lower }}">
+                <span class="status-dot"></span>
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('subscriptions.view_subscription', subscription_id=sub.id) }}" class="btn btn-secondary btn-sm">
+                View Details
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <!-- Clean Styled Empty State for Subscriptions -->
+    <div style="padding: 64px 32px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--brand-teal-50); color: var(--brand-teal); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.1);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.29 7 12 12 20.71 7"></polyline>
+          <line x1="12" y1="22" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">No active subscriptions found</h3>
+      <p style="max-width: 460px; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+        You currently do not have any active software subscriptions provisioned for this account. Explore our enterprise plans to subscribe or request a proposal.
+      </p>
+      <a href="{{ url_for('plans.list_plans') }}" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Browse our plans</span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Invoices & Statements Section -->
+  <div class="card-table-wrapper">
+    <div class="table-toolbar">
+      <div>
+        <h3>My Invoices & Statements</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Payment records and tax receipts</p>
+      </div>
+      {% if invoices %}
+      <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-secondary btn-sm">View All Invoices</a>
+      {% endif %}
+    </div>
+
+    {% if invoices and invoices | length > 0 %}
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Total Due</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td>
+              <a href="{{ url_for('invoices.view_invoice', invoice_id=inv.id) }}" class="cell-code" style="font-weight: 600;">
+                {{ inv.invoice_number }}
+              </a>
+            </td>
+            <td>{{ inv.issue_date | date }}</td>
+            <td>{{ inv.due_date | date }}</td>
+            <td><strong>{{ inv.total_due | currency(inv.currency) }}</strong></td>
+            <td>
+              <span class="badge-status badge-{{ inv.status | lower }}">
+                <span class="status-dot"></span>
+                {{ inv.status }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 8px;">
+                <a href="{{ url_for('invoices.view_invoice', invoice_id=inv.id) }}" class="btn btn-secondary btn-sm">
+                  View Receipt
+                </a>
+                {% if inv.status in ['Unpaid', 'Overdue'] %}
+                <form action="{{ url_for('invoices.pay_invoice', invoice_id=inv.id) }}" method="POST" style="display: inline;">
+                  <button type="submit" class="btn btn-primary btn-sm">Pay Now</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+      No invoice statements have been issued for this account yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
